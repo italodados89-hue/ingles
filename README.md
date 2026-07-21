@@ -12,7 +12,9 @@ Plataforma estática de estudo intensivo de inglês profissional:
 
 ## Executar localmente
 
-Sirva este diretório por HTTP e abra `index.html`. Exemplo com Python:
+Abra `index.html` com duplo clique. A versão corrigida carrega o programa por `program-data.js` e não exige servidor local.
+
+Opcionalmente, para simular o GitHub Pages por HTTP:
 
 ```bash
 python3 -m http.server 8080 --directory ingles
@@ -22,7 +24,7 @@ Depois acesse `http://localhost:8080`.
 
 ## Publicar no GitHub Pages
 
-Envie o conteúdo deste diretório para o repositório e ative **Settings → Pages → Deploy from a branch**. Não é necessário processo de build.
+Envie os arquivos `index.html`, `styles.css`, `config.js`, `program-data.js`, `app.js`, `service-worker.js` e `manifest.webmanifest` para a raiz do repositório. Depois, ative **Settings → Pages → Deploy from a branch**. Não é necessário processo de build.
 
 ## Google Sheets
 

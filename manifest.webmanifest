@@ -1,0 +1,10 @@
+{
+  "name": "English Momentum",
+  "short_name": "Momentum",
+  "description": "Plano intensivo de inglês profissional em 16 semanas",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#102a43",
+  "icons": []
+}

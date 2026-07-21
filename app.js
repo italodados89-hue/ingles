@@ -797,9 +797,21 @@ function bindEvents() {
 
 async function initialize() {
   try {
-    const response = await fetch("./data/program.json");
-    if (!response.ok) throw new Error("program.json não encontrado");
-    app.program = await response.json();
+    app.program = window.ENGLISH_MOMENTUM_PROGRAM || null;
+    if (!app.program && location.protocol.startsWith("http")) {
+      for (const path of ["./program.json", "./data/program.json"]) {
+        try {
+          const response = await fetch(path);
+          if (response.ok) {
+            app.program = await response.json();
+            break;
+          }
+        } catch (_error) {
+          // Tenta o próximo caminho compatível com versões anteriores do pacote.
+        }
+      }
+    }
+    if (!app.program) throw new Error("program-data.js não encontrado");
     app.user = loadUserData();
     const today = todayIso();
     app.selectedDate = app.program.days.some((day) => day.date === today)
@@ -814,7 +826,7 @@ async function initialize() {
     if (app.user.settings.endpoint) syncNow({ quiet: true });
   } catch (error) {
     console.error(error);
-    document.body.innerHTML = `<main style="max-width:720px;margin:80px auto;padding:24px"><h1>Não foi possível abrir a plataforma.</h1><p>Execute o site por um servidor local para carregar os dados: ${escapeHtml(error.message)}</p></main>`;
+    document.body.innerHTML = `<main style="max-width:720px;margin:80px auto;padding:24px"><h1>Não foi possível abrir a plataforma.</h1><p>Confirme que <strong>program-data.js</strong> está na mesma pasta de index.html. Detalhe: ${escapeHtml(error.message)}</p></main>`;
   }
 }
 

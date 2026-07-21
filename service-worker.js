@@ -1,12 +1,11 @@
-const CACHE = "english-momentum-v2";
+const CACHE = "english-momentum-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./config.js",
+  "./program-data.js",
   "./app.js",
-  "./data/program.json",
-  "./manifest.webmanifest",
 ];
 
 self.addEventListener("install", (event) => {
