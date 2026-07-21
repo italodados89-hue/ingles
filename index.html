@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#102a43">
+    <meta name="description" content="Plataforma pessoal de estudo intensivo de inglês profissional em 16 semanas.">
+    <title>English Momentum — 16 semanas</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Ir para o conteúdo</a>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegação principal">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">EM</span>
+          <div>
+            <strong>English Momentum</strong>
+            <span>Professional intensive</span>
+          </div>
+        </div>
+
+        <nav class="side-nav" id="sideNav">
+          <button class="nav-item active" data-view="dashboard" type="button"><span aria-hidden="true">◫</span> Visão geral</button>
+          <button class="nav-item" data-view="study" type="button"><span aria-hidden="true">▶</span> Estudo do dia</button>
+          <button class="nav-item" data-view="plan" type="button"><span aria-hidden="true">▦</span> Plano de 16 semanas</button>
+          <button class="nav-item" data-view="vocabulary" type="button"><span aria-hidden="true">Aa</span> Vocabulário</button>
+          <button class="nav-item" data-view="review" type="button"><span aria-hidden="true">↻</span> Revisão espaçada</button>
+          <button class="nav-item" data-view="assessment" type="button"><span aria-hidden="true">⌁</span> Avaliações</button>
+          <button class="nav-item" data-view="roadmap" type="button"><span aria-hidden="true">◇</span> Jornada de 16 meses</button>
+          <button class="nav-item" data-view="data" type="button"><span aria-hidden="true">⇅</span> Dados e sincronização</button>
+        </nav>
+
+        <div class="sidebar-progress">
+          <div class="mini-progress-copy">
+            <span>Bloco atual</span>
+            <strong id="sideBlockLabel">Bloco 1 · Semana 1</strong>
+          </div>
+          <div class="progress-track"><span id="sideProgressBar"></span></div>
+          <span id="sideProgressText">0% concluído</span>
+        </div>
+      </aside>
+
+      <div class="app-main">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+          <div class="topbar-title">
+            <span id="todayLabel">20 de julho de 2026</span>
+            <strong id="viewTitle">Visão geral</strong>
+          </div>
+          <div class="topbar-actions">
+            <span class="sync-chip" id="syncChip"><span class="sync-dot"></span><span id="syncLabel">Salvo neste dispositivo</span></span>
+            <button class="icon-button" id="syncButton" type="button" aria-label="Sincronizar agora">↻</button>
+            <button class="profile-button" type="button" data-view="data" aria-label="Abrir configurações">IT</button>
+          </div>
+        </header>
+
+        <main id="mainContent">
+          <div class="loading-state" id="appLoading" role="status"><span></span> Carregando o seu plano...</div>
+          <section class="view active" id="view-dashboard" data-title="Visão geral">
+            <div class="welcome-row">
+              <div>
+                <p class="eyebrow">Your English, in motion</p>
+                <h1>Um plano claro. Uma entrega real por dia.</h1>
+                <p class="lede">2h30 de prática deliberada, vocabulário profissional e progresso que fica registrado.</p>
+              </div>
+              <button class="button primary" type="button" data-view="study">Continuar o estudo <span aria-hidden="true">→</span></button>
+            </div>
+
+            <div class="metrics-grid" id="metricsGrid" aria-live="polite"></div>
+
+            <div class="dashboard-grid">
+              <article class="today-card" id="todayCard"></article>
+              <article class="panel weekly-panel">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Consistência</p><h2>Ritmo de estudo</h2></div>
+                  <span class="badge" id="streakBadge">0 dias</span>
+                </div>
+                <div class="heatmap" id="heatmap" aria-label="Mapa de dias estudados"></div>
+                <div class="legend"><span><i class="level-0"></i> sem registro</span><span><i class="level-1"></i> parcial</span><span><i class="level-2"></i> concluído</span></div>
+              </article>
+            </div>
+
+            <div class="dashboard-grid secondary-grid">
+              <article class="panel">
+                <div class="panel-heading"><div><p class="eyebrow">Memória</p><h2>Vocabulário ativo</h2></div><button class="text-button" data-view="vocabulary" type="button">Ver banco</button></div>
+                <div class="mastery-chart" id="masteryChart"></div>
+              </article>
+              <article class="panel">
+                <div class="panel-heading"><div><p class="eyebrow">Próximos passos</p><h2>Agenda da semana</h2></div></div>
+                <div class="upcoming-list" id="upcomingList"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="view" id="view-study" data-title="Estudo do dia">
+            <div class="section-header sticky-tools">
+              <div><p class="eyebrow">Daily studio</p><h1 id="studyTitle">Estudo do dia</h1><p id="studySubtitle"></p></div>
+              <div class="date-controls">
+                <button class="icon-button" id="prevDay" type="button" aria-label="Dia anterior">←</button>
+                <select id="daySelect" aria-label="Selecionar dia de estudo"></select>
+                <button class="icon-button" id="nextDay" type="button" aria-label="Próximo dia">→</button>
+              </div>
+            </div>
+
+            <article class="mission-banner" id="missionBanner"></article>
+
+            <div class="study-layout">
+              <div class="study-primary">
+                <article class="panel">
+                  <div class="panel-heading"><div><p class="eyebrow">150 minutos</p><h2>Ritual de estudo</h2></div><span class="completion-label" id="ritualProgress">0 de 7</span></div>
+                  <div class="ritual-list" id="ritualList"></div>
+                </article>
+
+                <article class="panel grammar-panel" id="grammarPanel"></article>
+
+                <article class="panel">
+                  <div class="panel-heading"><div><p class="eyebrow">10 chunks do dia</p><h2>Vocabulário em contexto</h2></div><span class="badge">Ouça · use · recupere</span></div>
+                  <div class="daily-vocab" id="dailyVocab"></div>
+                </article>
+              </div>
+
+              <aside class="study-secondary">
+                <article class="panel note-panel">
+                  <p class="eyebrow">Produção</p>
+                  <h2>Meu texto em inglês</h2>
+                  <textarea id="writingNote" rows="9" placeholder="Write 80–120 words here..."></textarea>
+                  <div class="word-count"><span id="writingCount">0 palavras</span><span>Meta: 80–120</span></div>
+                </article>
+                <article class="panel note-panel">
+                  <p class="eyebrow">Reflection</p>
+                  <h2>Registro rápido</h2>
+                  <label>Observações<textarea id="dayNotes" rows="4" placeholder="O que funcionou? Onde você travou?"></textarea></label>
+                  <label>Erros e correções<textarea id="errorNotes" rows="4" placeholder="Original → forma corrigida → regra curta"></textarea></label>
+                  <div class="two-fields">
+                    <label>Minutos realizados<input id="minutesDone" type="number" min="0" max="300" inputmode="numeric"></label>
+                    <label>Fala sem parar<input id="speakingMinutes" type="number" min="0" max="120" inputmode="numeric"></label>
+                  </div>
+                  <div class="rating-row"><span>Listening</span><div class="rating" data-rating="listening"></div></div>
+                  <div class="rating-row"><span>Speaking</span><div class="rating" data-rating="speaking"></div></div>
+                  <button class="button primary full-button" id="completeDay" type="button">Concluir e salvar o dia</button>
+                </article>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view" id="view-plan" data-title="Plano de 16 semanas">
+            <div class="section-header">
+              <div><p class="eyebrow">Dois blocos intensivos</p><h1>16 semanas, 112 entregas</h1><p>O conteúdo original foi preservado nas semanas 1–8; as semanas 9–16 elevam a prática para B1–B2.</p></div>
+              <div class="segmented" id="blockFilter"><button class="active" data-block="all" type="button">Tudo</button><button data-block="1" type="button">Bloco 1</button><button data-block="2" type="button">Bloco 2</button></div>
+            </div>
+            <div class="week-grid" id="weekGrid"></div>
+            <article class="checkpoint-panel" id="checkpointPanel"></article>
+            <div class="day-drawer" id="weekDetail" hidden></div>
+          </section>
+
+          <section class="view" id="view-vocabulary" data-title="Vocabulário">
+            <div class="section-header">
+              <div><p class="eyebrow">1120 itens + substituições</p><h1>Banco de vocabulário ativo</h1><p>Marque o seu domínio. Itens já conhecidos recebem automaticamente um novo desafio.</p></div>
+            </div>
+            <div class="toolbar">
+              <label class="search-field"><span>Buscar</span><input id="vocabSearch" type="search" placeholder="Palavra, tradução ou frase..."></label>
+              <label><span>Semana</span><select id="vocabWeekFilter"><option value="all">Todas</option></select></label>
+              <label><span>Domínio</span><select id="vocabStatusFilter"><option value="all">Todos</option><option value="unrated">Sem avaliação</option><option value="unknown">Nova para mim</option><option value="known">Já conhecia</option><option value="mastered">Domino</option></select></label>
+              <span class="result-count" id="vocabCount"></span>
+            </div>
+            <div class="vocab-list" id="vocabList" aria-live="polite"></div>
+            <div class="pagination" id="vocabPagination"></div>
+          </section>
+
+          <section class="view" id="view-review" data-title="Revisão espaçada">
+            <div class="section-header">
+              <div><p class="eyebrow">D+1 · D+3 · D+7 · D+14 · D+30</p><h1>Fila de recuperação</h1><p>Veja o inglês, recupere o significado e produza uma frase antes de revelar a resposta.</p></div>
+              <span class="badge" id="reviewQueueCount">0 para revisar</span>
+            </div>
+            <div class="review-shell" id="reviewShell"></div>
+          </section>
+
+          <section class="view" id="view-assessment" data-title="Avaliações">
+            <div class="section-header">
+              <div><p class="eyebrow">Evidence over feeling</p><h1>Avaliações semanais</h1><p>Registre evidências de fluência, compreensão, interação, vocabulário, gramática e pronúncia.</p></div>
+            </div>
+            <div class="assessment-grid">
+              <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>Nota por semana</h2></div></div><div class="score-chart" id="scoreChart"></div></article>
+              <article class="panel assessment-form-panel" id="assessmentFormPanel"></article>
+            </div>
+            <div class="assessment-table-wrap"><table class="assessment-table"><thead><tr><th>Semana</th><th>Meta oral</th><th>Nota</th><th>Evidência</th><th></th></tr></thead><tbody id="assessmentRows"></tbody></table></div>
+          </section>
+
+          <section class="view" id="view-roadmap" data-title="Jornada de 16 meses">
+            <div class="section-header"><div><p class="eyebrow">8 blocos de 8 semanas</p><h1>Da base à autonomia profissional</h1><p>Os dois primeiros blocos já estão completos. Os próximos serão adaptados aos seus dados reais.</p></div></div>
+            <div class="roadmap-list" id="roadmapList"></div>
+            <article class="panel year-end-panel"><div class="panel-heading"><div><p class="eyebrow">16 de novembro a 31 de dezembro</p><h2>Ponte de consolidação até o fim do ano</h2></div></div><div class="bridge-grid" id="bridgeGrid"></div></article>
+          </section>
+
+          <section class="view" id="view-data" data-title="Dados e sincronização">
+            <div class="section-header"><div><p class="eyebrow">Local-first</p><h1>Seus dados, sob seu controle</h1><p>O navegador salva imediatamente. A sincronização com a aba BD acontece pelo Apps Script.</p></div></div>
+            <div class="data-grid">
+              <article class="panel settings-panel">
+                <p class="eyebrow">Google Sheets</p><h2>Conectar Web App</h2>
+                <label>URL do Apps Script<input id="appsScriptUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec"></label>
+                <div class="inline-actions"><button class="button primary" id="saveEndpoint" type="button">Salvar e testar</button><button class="button secondary" id="clearEndpoint" type="button">Desconectar</button></div>
+                <div class="connection-result" id="connectionResult" aria-live="polite"></div>
+                <p class="privacy-note"><strong>Privacidade:</strong> a aba BD aparece na publicação pública atual. Não registre senhas, dados de clientes ou informações confidenciais; prefira retirar essa aba da publicação.</p>
+              </article>
+              <article class="panel">
+                <p class="eyebrow">Memória local</p><h2>Backup e restauração</h2>
+                <div class="data-stat"><span>Eventos salvos</span><strong id="eventCount">0</strong></div>
+                <div class="data-stat"><span>Aguardando sincronização</span><strong id="pendingCount">0</strong></div>
+                <div class="stack-actions"><button class="button secondary" id="exportData" type="button">Exportar backup JSON</button><label class="button secondary file-button">Importar backup<input id="importData" type="file" accept="application/json"></label></div>
+              </article>
+              <article class="panel source-panel">
+                <p class="eyebrow">Fonte online</p><h2>Planilha publicada</h2>
+                <div class="connection-result" id="sourceResult">Conteúdo local completo disponível.</div>
+                <button class="button secondary" id="checkSource" type="button">Verificar planilha pública</button>
+                <a class="text-link" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRGAXgwDpqGaqrfo_XuwG6eocSlXGstMXPaEa-VpR9BuEq7_x1sD7qpjOpHJ8eYCwnhmHKjDVw287/pubhtml" target="_blank" rel="noreferrer">Abrir planilha ↗</a>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+    <script src="./config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
