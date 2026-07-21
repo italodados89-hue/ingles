@@ -1,5 +1,6 @@
 const CONFIG = window.ENGLISH_MOMENTUM_CONFIG || {};
 const STORAGE_KEY = "englishMomentum:userData:v1";
+const AUDIO_PREFS_KEY = "englishMomentum:audioPrefs:v2";
 const PAGE_SIZE = 30;
 const TODAY = new Date();
 
@@ -17,6 +18,22 @@ const app = {
   reviewIndex: 0,
   reviewAnswerVisible: false,
   saveTimer: null,
+};
+
+const audio = {
+  synth: "speechSynthesis" in window ? window.speechSynthesis : null,
+  voices: [],
+  voiceKey: "",
+  rate: 0.95,
+  state: "idle",
+  chunks: [],
+  chunkIndex: 0,
+  currentText: "",
+  currentLabel: "",
+  currentUtterance: null,
+  sourceButton: null,
+  generation: 0,
+  retriedWithoutVoice: false,
 };
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
@@ -185,6 +202,7 @@ function buildReviewQueue() {
 }
 
 function setView(view) {
+  if (view !== app.activeView && audio.state !== "idle") stopSpeech({ quiet: true });
   app.activeView = view;
   $$(".view").forEach((node) => node.classList.toggle("active", node.id === `view-${view}`));
   $$("[data-view]").forEach((node) => node.classList.toggle("active", node.dataset.view === view && node.classList.contains("nav-item")));
@@ -317,7 +335,7 @@ function renderLessonLibrary(day, lesson) {
     <details class="lesson-section" open>
       <summary><span class="lesson-index">1</span><span><strong>Leitura guiada</strong><small>Compreensão, contexto e noticing</small></span><span class="details-chevron">⌄</span></summary>
       <div class="lesson-section-body">
-        <div class="section-action-row"><h3>${escapeHtml(reading.title)}</h3><button class="button compact secondary" type="button" data-speak="${escapeHtml(reading.text)}">Ouvir texto</button></div>
+        <div class="section-action-row"><h3>${escapeHtml(reading.title)}</h3><button class="button compact secondary audio-trigger" type="button" data-speak="${escapeHtml(reading.text)}" data-speak-label="Leitura guiada"><span data-audio-icon aria-hidden="true">▶</span> Ouvir texto</button></div>
         <p class="reading-text">${escapeHtml(reading.text)}</p>
         <div class="notice-box"><strong>Notice</strong><span>Encontre no texto um exemplo de <em>${escapeHtml(day.grammar)}</em> e três chunks do vocabulário diário.</span></div>
         <ol class="question-list"><li>${escapeHtml(reading.gist)}</li>${reading.details.map(([question]) => `<li>${escapeHtml(question)}</li>`).join("")}</ol>
@@ -339,7 +357,7 @@ function renderLessonLibrary(day, lesson) {
         <div class="scenario-card"><strong>Cenário</strong><p>${escapeHtml(speaking.scenario)}</p></div>
         <div class="two-column-lesson"><div><h3>Roteiro de 3 minutos</h3><ol class="question-list">${speaking.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div><div><h3>Sentence frames</h3><ul class="phrase-bank">${speaking.frames.map((frame) => `<li>${escapeHtml(frame)}</li>`).join("")}</ul></div></div>
         <div class="repair-strip"><strong>Se travar:</strong> ${speaking.rescue.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
-        <details class="model-answer"><summary>Ver e ouvir resposta-modelo</summary><p>${escapeHtml(speaking.model)}</p><button class="button compact secondary" type="button" data-speak="${escapeHtml(speaking.model)}">Ouvir modelo</button></details>
+        <details class="model-answer"><summary>Ver e ouvir resposta-modelo</summary><p>${escapeHtml(speaking.model)}</p><button class="button compact secondary audio-trigger" type="button" data-speak="${escapeHtml(speaking.model)}" data-speak-label="Resposta-modelo"><span data-audio-icon aria-hidden="true">▶</span> Ouvir modelo</button></details>
       </div>
     </details>
 
@@ -357,7 +375,7 @@ function renderLessonLibrary(day, lesson) {
     <details class="lesson-section">
       <summary><span class="lesson-index">5</span><span><strong>Pronúncia e revisão</strong><small>Inteligibilidade + recuperação espaçada</small></span><span class="details-chevron">⌄</span></summary>
       <div class="lesson-section-body">
-        <div class="pronunciation-card"><div><strong>${escapeHtml(lesson.pronunciation.target)}</strong><p>${escapeHtml(lesson.pronunciation.tip)}</p></div><button class="button compact secondary" type="button" data-speak="${escapeHtml(lesson.pronunciation.drill)}">Ouvir drill</button></div>
+        <div class="pronunciation-card"><div><strong>${escapeHtml(lesson.pronunciation.target)}</strong><p>${escapeHtml(lesson.pronunciation.tip)}</p></div><button class="button compact secondary audio-trigger" type="button" data-speak="${escapeHtml(lesson.pronunciation.drill)}" data-speak-label="Drill de pronúncia"><span data-audio-icon aria-hidden="true">▶</span> Ouvir drill</button></div>
         <p class="drill-line">${escapeHtml(lesson.pronunciation.drill)}</p>
         <h3>Recuperação ativa</h3><ol class="question-list">${lesson.retrieval.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
       </div>
@@ -404,7 +422,7 @@ function renderStudy() {
 
   const items = day.vocabularyIds.map((id) => app.program.vocabulary.find((item) => item.id === id)).filter(Boolean);
   $("#dailyVocab").innerHTML = items.map((item, index) => `
-    <div class="daily-word"><span class="word-number">${String(index + 1).padStart(2, "0")}</span><span><strong>${escapeHtml(item.english)}</strong><small>${escapeHtml(item.portuguese)}</small></span><button class="speak-button" type="button" data-speak="${escapeHtml(item.english)}" aria-label="Ouvir ${escapeHtml(item.english)}">◖</button></div>
+    <div class="daily-word"><span class="word-number">${String(index + 1).padStart(2, "0")}</span><span><strong>${escapeHtml(item.english)}</strong><small>${escapeHtml(item.portuguese)}</small></span><button class="speak-button audio-trigger" type="button" data-speak="${escapeHtml(item.english)}" data-speak-label="${escapeHtml(item.english)}" aria-label="Ouvir ${escapeHtml(item.english)}"><span data-audio-icon aria-hidden="true">▶</span></button></div>
   `).join("") || `<div class="empty-state">Este checkpoint usa a revisão dos itens já estudados.</div>`;
 
   $("#writingNote").value = progress.writing || "";
@@ -581,7 +599,7 @@ function renderVocabulary() {
   $("#vocabList").innerHTML = visible.length ? visible.map((item) => {
     const progress = app.user.vocabProgress[item.id] || {};
     const replacement = progress.replacementId ? app.program.vocabulary.find((entry) => entry.id === progress.replacementId) : null;
-    return `<article class="vocab-card"><div class="vocab-term"><span class="word-number">${item.id.slice(1)}</span><span><strong>${escapeHtml(item.english)}</strong><small>${escapeHtml(item.portuguese)} · Semana ${item.week}</small></span><button class="speak-button" type="button" data-speak="${escapeHtml(item.english)}" aria-label="Ouvir pronúncia">◖</button></div><div class="vocab-example">${escapeHtml(item.example)}<em>Crie uma frase pessoal e outra profissional.</em></div><div class="thermometer" aria-label="Nível de domínio"><button type="button" data-vocab-id="${item.id}" data-status="unknown" class="${progress.status === "unknown" ? "active" : ""}">Nova</button><button type="button" data-vocab-id="${item.id}" data-status="known" class="${progress.status === "known" ? "active" : ""}">Já conhecia</button><button type="button" data-vocab-id="${item.id}" data-status="mastered" class="${progress.status === "mastered" ? "active" : ""}">Domino</button></div>${replacement ? `<div class="replacement"><span>Novo desafio sugerido:</span><strong>${escapeHtml(replacement.english)}</strong><span>${escapeHtml(replacement.portuguese)}</span>${progress.replacementAccepted ? `<span class="badge">Adicionado</span>` : `<button class="accept-replacement" type="button" data-accept-replacement="${item.id}">Adicionar ao estudo</button>`}</div>` : ""}</article>`;
+    return `<article class="vocab-card"><div class="vocab-term"><span class="word-number">${item.id.slice(1)}</span><span><strong>${escapeHtml(item.english)}</strong><small>${escapeHtml(item.portuguese)} · Semana ${item.week}</small></span><button class="speak-button audio-trigger" type="button" data-speak="${escapeHtml(item.english)}" data-speak-label="${escapeHtml(item.english)}" aria-label="Ouvir ${escapeHtml(item.english)}"><span data-audio-icon aria-hidden="true">▶</span></button></div><div class="vocab-example">${escapeHtml(item.example)}<em>Crie uma frase pessoal e outra profissional.</em></div><div class="thermometer" aria-label="Nível de domínio"><button type="button" data-vocab-id="${item.id}" data-status="unknown" class="${progress.status === "unknown" ? "active" : ""}">Nova</button><button type="button" data-vocab-id="${item.id}" data-status="known" class="${progress.status === "known" ? "active" : ""}">Já conhecia</button><button type="button" data-vocab-id="${item.id}" data-status="mastered" class="${progress.status === "mastered" ? "active" : ""}">Domino</button></div>${replacement ? `<div class="replacement"><span>Novo desafio sugerido:</span><strong>${escapeHtml(replacement.english)}</strong><span>${escapeHtml(replacement.portuguese)}</span>${progress.replacementAccepted ? `<span class="badge">Adicionado</span>` : `<button class="accept-replacement" type="button" data-accept-replacement="${item.id}">Adicionar ao estudo</button>`}</div>` : ""}</article>`;
   }).join("") : `<div class="empty-state">Nenhum item corresponde aos filtros.</div>`;
   const pages = [];
   const start = Math.max(1, app.vocabPage - 2);
@@ -593,13 +611,296 @@ function renderVocabulary() {
   $("#vocabStatusFilter").value = app.vocabStatus;
 }
 
-function pronounce(text) {
-  if (!("speechSynthesis" in window)) return toast("Pronúncia não disponível neste navegador.", "error");
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.84;
-  window.speechSynthesis.speak(utterance);
+function loadAudioPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUDIO_PREFS_KEY)) || {};
+    audio.voiceKey = String(saved.voiceKey || "");
+    audio.rate = [0.85, 0.95, 1.05].includes(Number(saved.rate)) ? Number(saved.rate) : 0.95;
+  } catch (_error) {
+    audio.voiceKey = "";
+    audio.rate = 0.95;
+  }
+}
+
+function saveAudioPrefs() {
+  localStorage.setItem(AUDIO_PREFS_KEY, JSON.stringify({ voiceKey: audio.voiceKey, rate: audio.rate }));
+}
+
+function audioVoiceKey(voice) {
+  return voice.voiceURI || `${voice.name}::${voice.lang}`;
+}
+
+function audioVoiceScore(voice) {
+  const name = voice.name.toLowerCase();
+  const lang = voice.lang.toLowerCase();
+  let score = lang === "en-us" ? 80 : lang.startsWith("en-us") ? 75 : lang === "en-gb" ? 60 : lang.startsWith("en") ? 45 : 0;
+  if (/(enhanced|premium|natural|neural|samantha|ava|aria|jenny|google us english)/.test(name)) score += 35;
+  if (voice.default) score += 8;
+  if (/(bad news|bells|boing|bubbles|cellos|good news|junior|organ|superstar|trinoids|whisper|zarvox)/.test(name)) score -= 100;
+  return score;
+}
+
+function selectedAudioVoice() {
+  return audio.voices.find((voice) => audioVoiceKey(voice) === audio.voiceKey) || audio.voices[0] || null;
+}
+
+function renderAudioVoiceOptions() {
+  const select = $("#audioVoiceSelect");
+  if (!select) return;
+  if (!audio.voices.length) {
+    select.innerHTML = `<option value="">Voz inglesa automática</option>`;
+    select.value = "";
+    return;
+  }
+  if (!audio.voiceKey || !audio.voices.some((voice) => audioVoiceKey(voice) === audio.voiceKey)) {
+    audio.voiceKey = audioVoiceKey(audio.voices[0]);
+    saveAudioPrefs();
+  }
+  select.innerHTML = audio.voices.map((voice) => {
+    const accent = voice.lang.toUpperCase();
+    const local = voice.localService ? "dispositivo" : "online";
+    return `<option value="${escapeHtml(audioVoiceKey(voice))}">${escapeHtml(voice.name)} · ${escapeHtml(accent)} · ${local}</option>`;
+  }).join("");
+  select.value = audio.voiceKey;
+}
+
+function refreshAudioVoices() {
+  if (!audio.synth) return;
+  audio.voices = audio.synth.getVoices()
+    .filter((voice) => voice.lang?.toLowerCase().startsWith("en"))
+    .sort((a, b) => audioVoiceScore(b) - audioVoiceScore(a) || a.name.localeCompare(b.name));
+  renderAudioVoiceOptions();
+}
+
+function splitSpeechText(value, maxLength = 220) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  const chunks = [];
+  const pushPart = (part) => {
+    const clean = part.trim();
+    if (!clean) return;
+    if (clean.length <= maxLength) {
+      const previous = chunks[chunks.length - 1];
+      if (previous && `${previous} ${clean}`.length <= maxLength) chunks[chunks.length - 1] = `${previous} ${clean}`;
+      else chunks.push(clean);
+      return;
+    }
+    const clauses = clean.split(/(?<=[,;:])\s+/);
+    if (clauses.length > 1) {
+      clauses.forEach(pushPart);
+      return;
+    }
+    const words = clean.split(" ");
+    let line = "";
+    words.forEach((word) => {
+      if (!line || `${line} ${word}`.length <= maxLength) line = line ? `${line} ${word}` : word;
+      else { chunks.push(line); line = word; }
+    });
+    if (line) chunks.push(line);
+  };
+  sentences.forEach(pushPart);
+  return chunks;
+}
+
+function openAudioPlayer() {
+  const player = $("#audioPlayer");
+  if (!player) return;
+  player.hidden = false;
+  document.body.classList.add("audio-player-open");
+  $("#audioOpenButton")?.setAttribute("aria-expanded", "true");
+}
+
+function hideAudioPlayer() {
+  const player = $("#audioPlayer");
+  if (!player) return;
+  player.hidden = true;
+  document.body.classList.remove("audio-player-open");
+  $("#audioOpenButton")?.setAttribute("aria-expanded", "false");
+}
+
+function resetAudioSourceButton() {
+  if (!audio.sourceButton) return;
+  audio.sourceButton.classList.remove("is-speaking", "is-paused");
+  audio.sourceButton.setAttribute("aria-pressed", "false");
+  const icon = $("[data-audio-icon]", audio.sourceButton);
+  if (icon) icon.textContent = "▶";
+}
+
+function updateAudioUi() {
+  const active = ["loading", "playing", "paused"].includes(audio.state);
+  const paused = audio.state === "paused";
+  const labels = {
+    idle: "Áudio pronto",
+    loading: "Preparando áudio…",
+    playing: "Reproduzindo",
+    paused: "Áudio pausado",
+    error: "Não foi possível reproduzir",
+  };
+  const icons = { idle: "▶", loading: "…", playing: "♪", paused: "Ⅱ", error: "!" };
+  if ($("#audioStatusLabel")) $("#audioStatusLabel").textContent = labels[audio.state] || labels.idle;
+  if ($("#audioStateIcon")) $("#audioStateIcon").textContent = icons[audio.state] || icons.idle;
+  if ($("#audioNowPlaying")) {
+    $("#audioNowPlaying").textContent = active
+      ? `${audio.currentLabel || "Inglês"} · trecho ${Math.min(audio.chunkIndex + 1, audio.chunks.length)} de ${audio.chunks.length}`
+      : audio.state === "error" ? "Escolha outra voz inglesa e tente novamente." : "Toque em qualquer botão Ouvir para começar.";
+  }
+  if ($("#audioPauseButton")) $("#audioPauseButton").disabled = !active || audio.state === "loading";
+  if ($("#audioStopButton")) $("#audioStopButton").disabled = !active;
+  if ($("#audioPauseLabel")) $("#audioPauseLabel").textContent = paused ? "Continuar" : "Pausar";
+  const progress = audio.chunks.length ? (audio.chunkIndex / audio.chunks.length) * 100 : 0;
+  if ($("#audioProgressBar")) $("#audioProgressBar").style.width = `${audio.state === "idle" ? 0 : progress}%`;
+  if (audio.sourceButton) {
+    audio.sourceButton.classList.toggle("is-speaking", active && !paused);
+    audio.sourceButton.classList.toggle("is-paused", paused);
+    audio.sourceButton.setAttribute("aria-pressed", String(active));
+    const icon = $("[data-audio-icon]", audio.sourceButton);
+    if (icon) icon.textContent = active && !paused ? "■" : "▶";
+  }
+}
+
+function stopSpeech({ quiet = false, hidePlayer = false } = {}) {
+  audio.generation += 1;
+  if (audio.synth) {
+    audio.synth.cancel();
+    if (audio.synth.paused) audio.synth.resume();
+  }
+  resetAudioSourceButton();
+  audio.state = "idle";
+  audio.chunks = [];
+  audio.chunkIndex = 0;
+  audio.currentText = "";
+  audio.currentLabel = "";
+  audio.currentUtterance = null;
+  audio.sourceButton = null;
+  audio.retriedWithoutVoice = false;
+  updateAudioUi();
+  if (hidePlayer) hideAudioPlayer();
+  if (!quiet) toast("Áudio interrompido.");
+}
+
+function failSpeech(message) {
+  resetAudioSourceButton();
+  audio.state = "error";
+  audio.currentUtterance = null;
+  audio.sourceButton = null;
+  updateAudioUi();
+  toast(message, "error");
+}
+
+function speakNextChunk(token, forceAutomaticVoice = false) {
+  if (!audio.synth || token !== audio.generation) return;
+  if (audio.chunkIndex >= audio.chunks.length) {
+    resetAudioSourceButton();
+    audio.state = "idle";
+    audio.currentUtterance = null;
+    audio.sourceButton = null;
+    updateAudioUi();
+    return;
+  }
+  const utterance = new SpeechSynthesisUtterance(audio.chunks[audio.chunkIndex]);
+  const voice = forceAutomaticVoice ? null : selectedAudioVoice();
+  if (voice) utterance.voice = voice;
+  utterance.lang = voice?.lang || "en-US";
+  utterance.rate = audio.rate;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  audio.currentUtterance = utterance;
+  utterance.onstart = () => {
+    if (token !== audio.generation) return;
+    audio.state = "playing";
+    updateAudioUi();
+  };
+  utterance.onend = () => {
+    if (token !== audio.generation || audio.currentUtterance !== utterance) return;
+    audio.chunkIndex += 1;
+    updateAudioUi();
+    window.setTimeout(() => speakNextChunk(token, forceAutomaticVoice), 35);
+  };
+  utterance.onerror = (event) => {
+    if (token !== audio.generation || ["canceled", "interrupted"].includes(event.error)) return;
+    if (!audio.retriedWithoutVoice && ["voice-unavailable", "language-unavailable"].includes(event.error)) {
+      audio.retriedWithoutVoice = true;
+      window.setTimeout(() => speakNextChunk(token, true), 40);
+      return;
+    }
+    failSpeech(event.error === "not-allowed"
+      ? "O navegador bloqueou o áudio. Toque novamente após interagir com a página."
+      : "Esta voz não conseguiu reproduzir o texto. Escolha outra voz inglesa.");
+  };
+  audio.synth.speak(utterance);
+}
+
+function startSpeech(text, sourceButton) {
+  if (!audio.synth || !("SpeechSynthesisUtterance" in window)) {
+    toast("Pronúncia não disponível neste navegador.", "error");
+    return;
+  }
+  if (audio.sourceButton === sourceButton && ["loading", "playing", "paused"].includes(audio.state)) {
+    stopSpeech();
+    return;
+  }
+  stopSpeech({ quiet: true });
+  audio.chunks = splitSpeechText(text);
+  if (!audio.chunks.length) return;
+  audio.currentText = text;
+  audio.currentLabel = sourceButton?.dataset.speakLabel || "Inglês";
+  audio.sourceButton = sourceButton || null;
+  audio.state = "loading";
+  audio.chunkIndex = 0;
+  audio.retriedWithoutVoice = false;
+  const token = audio.generation;
+  openAudioPlayer();
+  updateAudioUi();
+  window.setTimeout(() => speakNextChunk(token), 45);
+}
+
+function toggleSpeechPause() {
+  if (!audio.synth || !["playing", "paused"].includes(audio.state)) return;
+  if (audio.state === "paused") {
+    audio.synth.resume();
+    audio.state = "playing";
+  } else {
+    audio.synth.pause();
+    audio.state = "paused";
+  }
+  updateAudioUi();
+}
+
+function initAudio() {
+  loadAudioPrefs();
+  $("#audioRateSelect").value = String(audio.rate);
+  if (!audio.synth) {
+    $("#audioOpenButton").disabled = true;
+    $("#audioVoiceSelect").innerHTML = `<option>Áudio indisponível</option>`;
+    return;
+  }
+  refreshAudioVoices();
+  audio.synth.addEventListener?.("voiceschanged", refreshAudioVoices);
+  window.setTimeout(refreshAudioVoices, 250);
+  window.setTimeout(refreshAudioVoices, 1000);
+  $("#audioOpenButton").addEventListener("click", () => {
+    if ($("#audioPlayer").hidden) openAudioPlayer();
+    else if (audio.state === "idle") hideAudioPlayer();
+    else openAudioPlayer();
+  });
+  $("#audioPauseButton").addEventListener("click", toggleSpeechPause);
+  $("#audioStopButton").addEventListener("click", () => stopSpeech());
+  $("#audioCloseButton").addEventListener("click", () => stopSpeech({ quiet: true, hidePlayer: true }));
+  $("#audioVoiceSelect").addEventListener("change", (event) => {
+    if (audio.state !== "idle") stopSpeech({ quiet: true });
+    audio.voiceKey = event.target.value;
+    saveAudioPrefs();
+    toast("Voz salva. Toque novamente em Ouvir.");
+  });
+  $("#audioRateSelect").addEventListener("change", (event) => {
+    if (audio.state !== "idle") stopSpeech({ quiet: true });
+    audio.rate = Number(event.target.value) || 0.95;
+    saveAudioPrefs();
+    toast("Velocidade salva. Toque novamente em Ouvir.");
+  });
+  window.addEventListener("pagehide", () => stopSpeech({ quiet: true }));
+  updateAudioUi();
 }
 
 function renderReview() {
@@ -610,7 +911,7 @@ function renderReview() {
   }
   const item = app.reviewQueue[app.reviewIndex];
   const progress = app.user.vocabProgress[item.id] || {};
-  $("#reviewShell").innerHTML = `<article class="flashcard"><span class="week-number">${app.reviewIndex + 1} de ${app.reviewQueue.length} · Semana ${item.week}</span><h2>${escapeHtml(item.english)}</h2><button class="button secondary" type="button" data-speak="${escapeHtml(item.english)}">Ouvir pronúncia</button>${app.reviewAnswerVisible ? `<div class="flashcard-answer"><strong>${escapeHtml(item.portuguese)}</strong><p>${escapeHtml(item.example)}</p><div class="review-actions"><button class="review-grade" data-grade="again" type="button">Não lembrei · 1d</button><button class="review-grade" data-grade="hard" type="button">Difícil · 3d</button><button class="review-grade" data-grade="good" type="button">Bom · 7/14d</button><button class="review-grade" data-grade="easy" type="button">Fácil · 30d</button></div></div>` : `<div class="review-actions"><button class="button primary" type="button" data-show-answer>Mostrar resposta</button></div>`}<p style="margin-top:24px;color:var(--muted);font-size:.72rem">Revisões anteriores: ${progress.reviewCount || 0}</p></article>`;
+  $("#reviewShell").innerHTML = `<article class="flashcard"><span class="week-number">${app.reviewIndex + 1} de ${app.reviewQueue.length} · Semana ${item.week}</span><h2>${escapeHtml(item.english)}</h2><button class="button secondary audio-trigger" type="button" data-speak="${escapeHtml(item.english)}" data-speak-label="${escapeHtml(item.english)}"><span data-audio-icon aria-hidden="true">▶</span> Ouvir pronúncia</button>${app.reviewAnswerVisible ? `<div class="flashcard-answer"><strong>${escapeHtml(item.portuguese)}</strong><p>${escapeHtml(item.example)}</p><div class="review-actions"><button class="review-grade" data-grade="again" type="button">Não lembrei · 1d</button><button class="review-grade" data-grade="hard" type="button">Difícil · 3d</button><button class="review-grade" data-grade="good" type="button">Bom · 7/14d</button><button class="review-grade" data-grade="easy" type="button">Fácil · 30d</button></div></div>` : `<div class="review-actions"><button class="button primary" type="button" data-show-answer>Mostrar resposta</button></div>`}<p style="margin-top:24px;color:var(--muted);font-size:.72rem">Revisões anteriores: ${progress.reviewCount || 0}</p></article>`;
 }
 
 function gradeReview(grade) {
@@ -842,13 +1143,13 @@ function bindEvents() {
     const viewButton = event.target.closest("[data-view]");
     if (viewButton) setView(viewButton.dataset.view);
     const openDay = event.target.closest("[data-open-day]");
-    if (openDay) { app.selectedDate = openDay.dataset.openDay; renderStudy(); setView("study"); }
+    if (openDay) { stopSpeech({ quiet: true }); app.selectedDate = openDay.dataset.openDay; renderStudy(); setView("study"); }
     const activity = event.target.closest("[data-activity]");
     if (activity) toggleActivity(activity.dataset.activity);
     const rate = event.target.closest("[data-rate-kind]");
     if (rate) setRating(rate.dataset.rateKind, Number(rate.dataset.rateValue));
     const speak = event.target.closest("[data-speak]");
-    if (speak) pronounce(speak.dataset.speak);
+    if (speak) startSpeech(speak.dataset.speak, speak);
     const status = event.target.closest("[data-vocab-id][data-status]");
     if (status) setVocabStatus(status.dataset.vocabId, status.dataset.status);
     const replacement = event.target.closest("[data-accept-replacement]");
@@ -870,9 +1171,9 @@ function bindEvents() {
     const open = document.body.classList.toggle("menu-open");
     $("#mobileMenu").setAttribute("aria-expanded", String(open));
   });
-  $("#daySelect").addEventListener("change", (event) => { persistDayProgress({ event: false }); app.selectedDate = event.target.value; renderStudy(); });
-  $("#prevDay").addEventListener("click", () => { const index = app.program.days.findIndex((day) => day.date === app.selectedDate); if (index > 0) { persistDayProgress({ event: false }); app.selectedDate = app.program.days[index - 1].date; renderStudy(); } });
-  $("#nextDay").addEventListener("click", () => { const index = app.program.days.findIndex((day) => day.date === app.selectedDate); if (index < app.program.days.length - 1) { persistDayProgress({ event: false }); app.selectedDate = app.program.days[index + 1].date; renderStudy(); } });
+  $("#daySelect").addEventListener("change", (event) => { stopSpeech({ quiet: true }); persistDayProgress({ event: false }); app.selectedDate = event.target.value; renderStudy(); });
+  $("#prevDay").addEventListener("click", () => { const index = app.program.days.findIndex((day) => day.date === app.selectedDate); if (index > 0) { stopSpeech({ quiet: true }); persistDayProgress({ event: false }); app.selectedDate = app.program.days[index - 1].date; renderStudy(); } });
+  $("#nextDay").addEventListener("click", () => { const index = app.program.days.findIndex((day) => day.date === app.selectedDate); if (index < app.program.days.length - 1) { stopSpeech({ quiet: true }); persistDayProgress({ event: false }); app.selectedDate = app.program.days[index + 1].date; renderStudy(); } });
   $("#completeDay").addEventListener("click", completeSelectedDay);
   ["#writingNote", "#dayNotes", "#errorNotes", "#minutesDone", "#speakingMinutes"].forEach((selector) => $(selector).addEventListener("input", () => { if (selector === "#writingNote") updateWordCount(); scheduleDaySave(); }));
 
@@ -915,6 +1216,7 @@ async function initialize() {
     $("#todayLabel").textContent = formatLongDate(today);
     populateFilters();
     bindEvents();
+    initAudio();
     renderAll();
     $("#appLoading").remove();
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./service-worker.js").catch(() => {});

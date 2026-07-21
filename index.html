@@ -52,6 +52,7 @@
           </div>
           <div class="topbar-actions">
             <span class="sync-chip" id="syncChip"><span class="sync-dot"></span><span id="syncLabel">Salvo neste dispositivo</span></span>
+            <button class="icon-button" id="audioOpenButton" type="button" aria-label="Configurar áudio" aria-expanded="false">♪</button>
             <button class="icon-button" id="syncButton" type="button" aria-label="Sincronizar agora">↻</button>
             <button class="profile-button" type="button" data-view="data" aria-label="Abrir configurações">IT</button>
           </div>
@@ -225,6 +226,21 @@
         </main>
       </div>
     </div>
+
+    <section class="audio-player" id="audioPlayer" aria-label="Controles de áudio" aria-live="polite" hidden>
+      <div class="audio-player-status">
+        <span class="audio-state-icon" id="audioStateIcon" aria-hidden="true">▶</span>
+        <div><strong id="audioStatusLabel">Áudio pronto</strong><span id="audioNowPlaying">Escolha uma voz e toque em qualquer botão Ouvir.</span></div>
+      </div>
+      <label class="audio-control-field"><span>Voz inglesa</span><select id="audioVoiceSelect" aria-label="Escolher voz inglesa"><option value="">Carregando vozes...</option></select></label>
+      <label class="audio-control-field audio-rate-field"><span>Velocidade</span><select id="audioRateSelect" aria-label="Velocidade do áudio"><option value="0.85">Lenta · 0,85×</option><option value="0.95" selected>Natural · 0,95×</option><option value="1.05">Rápida · 1,05×</option></select></label>
+      <div class="audio-player-actions">
+        <button class="audio-control-button" id="audioPauseButton" type="button" disabled><span aria-hidden="true">Ⅱ</span><span id="audioPauseLabel">Pausar</span></button>
+        <button class="audio-control-button stop" id="audioStopButton" type="button" disabled><span aria-hidden="true">■</span> Parar</button>
+        <button class="audio-control-button close" id="audioCloseButton" type="button" aria-label="Fechar controles de áudio">×</button>
+      </div>
+      <div class="audio-progress" aria-hidden="true"><span id="audioProgressBar"></span></div>
+    </section>
 
     <div class="toast-region" id="toastRegion" aria-live="polite"></div>
     <script src="./config.js"></script>
