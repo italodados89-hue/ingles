@@ -1,5 +1,5 @@
 window.ENGLISH_MOMENTUM_CONFIG = {
-  version: "1.0.0",
+  version: "2.0.0-study-edition",
   publishedSheetBase: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbRGAXgwDpqGaqrfo_XuwG6eocSlXGstMXPaEa-VpR9BuEq7_x1sD7qpjOpHJ8eYCwnhmHKjDVw287/pub",
   sheets: {
     plan: "801247550",

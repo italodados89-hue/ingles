@@ -1,31 +1,33 @@
-# English Momentum
+# English Momentum — Study Edition 2.0
 
-Plataforma estática de estudo intensivo de inglês profissional:
+Curso estático e completo de inglês profissional para adulto brasileiro, com progressão A2–B1 até B1–B2.
 
-- 16 semanas centrais em dois blocos de 8 semanas;
-- 112 sessões de 2h30 e 1.120 itens lexicais;
-- vocabulário com termômetro de domínio e sugestão de substituição;
-- revisão espaçada D+1, D+3, D+7, D+14 e D+30;
-- gramática para fala, escrita, avaliações e registro de erros;
-- memória local, backup JSON e sincronização opcional com Google Sheets;
-- funcionamento responsivo e offline após o primeiro acesso.
+## O que mudou
+
+- 112 aulas diárias completas, não apenas briefings;
+- explicação gramatical com forma, significado, uso, padrões e contraste PT→EN;
+- regras para presente, passado, `will`, `was/were`, `there is/are`, present perfect, condicionais, voz passiva e escrita profissional;
+- exemplos ligados a confiabilidade, manutenção, selos mecânicos, sensores, contratos, marketing, clientes e gestão;
+- leitura guiada com perguntas e gabarito;
+- seis exercícios controlados por dia, com respostas;
+- speaking lab com roteiro, sentence frames, repair language e resposta-modelo com áudio do navegador;
+- writing workshop com estrutura, phrase bank, texto-modelo e checklist;
+- pronúncia, recuperação ativa e revisão espaçada;
+- 1.120 itens de vocabulário e todo o acompanhamento já existente;
+- funcionamento offline após o primeiro acesso.
 
 ## Executar localmente
 
-Abra `index.html` com duplo clique. A versão corrigida carrega o programa por `program-data.js` e não exige servidor local.
-
-Opcionalmente, para simular o GitHub Pages por HTTP:
-
-```bash
-python3 -m http.server 8080 --directory ingles
-```
-
-Depois acesse `http://localhost:8080`.
+Você pode abrir `index.html` com duplo clique. Para testar exatamente como no GitHub Pages, execute um servidor local na pasta e abra o endereço exibido no navegador.
 
 ## Publicar no GitHub Pages
 
-Envie os arquivos `index.html`, `styles.css`, `config.js`, `program-data.js`, `app.js`, `service-worker.js` e `manifest.webmanifest` para a raiz do repositório. Depois, ative **Settings → Pages → Deploy from a branch**. Não é necessário processo de build.
+Envie **todos** os arquivos desta pasta para a raiz do repositório. O novo arquivo `lesson-library.js` é obrigatório. Depois, em **Settings → Pages**, escolha **Deploy from a branch**. Não existe etapa de build.
 
-## Google Sheets
+Se uma versão antiga continuar aparecendo, faça uma atualização forçada da página ou limpe os dados do site. O cache desta edição usa uma nova versão.
 
-Siga as instruções em `google-apps-script/README.md`. A URL do Web App é informada pela própria tela **Dados e sincronização** e fica salva apenas no navegador.
+## Google Sheets e progresso
+
+O conteúdo completo está dentro do pacote e não depende da planilha para abrir. O progresso continua salvo no navegador e pode ser sincronizado pela URL do Apps Script na tela **Dados e sincronização**.
+
+O arquivo `English_Momentum_Biblioteca_Pedagogica.xlsx`, incluído no pacote final, contém abas prontas para importação no Google Sheets. A URL CSV publicada é somente leitura e não permite criar abas diretamente.

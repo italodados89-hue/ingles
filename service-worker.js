@@ -1,10 +1,11 @@
-const CACHE = "english-momentum-v3";
+const CACHE = "english-momentum-study-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./config.js",
   "./program-data.js",
+  "./lesson-library.js",
   "./app.js",
 ];
 

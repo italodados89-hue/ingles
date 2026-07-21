@@ -130,6 +130,11 @@ function currentDay() {
   return app.program.days.find((day) => day.date === app.selectedDate) || app.program.days[0];
 }
 
+function currentLesson() {
+  const day = currentDay();
+  return window.ENGLISH_MOMENTUM_LESSONS?.lessons?.[day.id] || null;
+}
+
 function dayProgress(dayId) {
   return app.user.dayProgress[dayId] || {
     completedActivities: [], status: "not_started", minutes: 0, speakingMinutes: 0,
@@ -291,8 +296,83 @@ function renderRatings(progress) {
   }
 }
 
+function renderLessonLibrary(day, lesson) {
+  const panel = $("#lessonLibraryPanel");
+  if (!lesson) {
+    panel.innerHTML = `<div class="empty-state">A biblioteca completa desta aula não foi carregada. Confirme que <strong>lesson-library.js</strong> está na mesma pasta.</div>`;
+    return;
+  }
+
+  const grammar = lesson.grammar;
+  const reading = lesson.reading;
+  const speaking = lesson.speaking;
+  const writing = lesson.writing;
+  panel.innerHTML = `
+    <div class="panel-heading lesson-heading">
+      <div><p class="eyebrow">Caderno de aula · ${escapeHtml(lesson.level)}</p><h2>Aprenda, pratique e produza</h2></div>
+      <span class="badge">Aula ${day.day} de 112</span>
+    </div>
+    <div class="lesson-objective"><strong>Objetivo mensurável</strong><span>${escapeHtml(lesson.objective)}</span></div>
+
+    <details class="lesson-section" open>
+      <summary><span class="lesson-index">1</span><span><strong>Leitura guiada</strong><small>Compreensão, contexto e noticing</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body">
+        <div class="section-action-row"><h3>${escapeHtml(reading.title)}</h3><button class="button compact secondary" type="button" data-speak="${escapeHtml(reading.text)}">Ouvir texto</button></div>
+        <p class="reading-text">${escapeHtml(reading.text)}</p>
+        <div class="notice-box"><strong>Notice</strong><span>Encontre no texto um exemplo de <em>${escapeHtml(day.grammar)}</em> e três chunks do vocabulário diário.</span></div>
+        <ol class="question-list"><li>${escapeHtml(reading.gist)}</li>${reading.details.map(([question]) => `<li>${escapeHtml(question)}</li>`).join("")}</ol>
+      </div>
+    </details>
+
+    <details class="lesson-section" open>
+      <summary><span class="lesson-index">2</span><span><strong>Prática controlada</strong><small>6 questões antes da produção livre</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body">
+        <p class="practice-instruction">Complete em inglês sem olhar o gabarito. Depois, diga cada resposta em voz alta duas vezes.</p>
+        <div class="exercise-grid">${grammar.practice.map(([prompt], index) => `<label class="exercise-item"><span>${index + 1}. ${escapeHtml(prompt)}</span><input type="text" autocomplete="off" aria-label="Resposta da questão ${index + 1}" placeholder="Type your answer..."></label>`).join("")}</div>
+        <details class="answer-key"><summary>Conferir gabarito e modelos</summary><ol>${grammar.practice.map(([, answer]) => `<li>${escapeHtml(answer)}</li>`).join("")}</ol></details>
+      </div>
+    </details>
+
+    <details class="lesson-section">
+      <summary><span class="lesson-index">3</span><span><strong>Speaking lab</strong><small>Roteiro, frases de apoio e modelo</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body">
+        <div class="scenario-card"><strong>Cenário</strong><p>${escapeHtml(speaking.scenario)}</p></div>
+        <div class="two-column-lesson"><div><h3>Roteiro de 3 minutos</h3><ol class="question-list">${speaking.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div><div><h3>Sentence frames</h3><ul class="phrase-bank">${speaking.frames.map((frame) => `<li>${escapeHtml(frame)}</li>`).join("")}</ul></div></div>
+        <div class="repair-strip"><strong>Se travar:</strong> ${speaking.rescue.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
+        <details class="model-answer"><summary>Ver e ouvir resposta-modelo</summary><p>${escapeHtml(speaking.model)}</p><button class="button compact secondary" type="button" data-speak="${escapeHtml(speaking.model)}">Ouvir modelo</button></details>
+      </div>
+    </details>
+
+    <details class="lesson-section">
+      <summary><span class="lesson-index">4</span><span><strong>Writing workshop</strong><small>Estrutura, phrase bank, modelo e revisão</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body">
+        <p class="practice-instruction">${escapeHtml(writing.task)}</p>
+        <div class="writing-map">${writing.structure.map(([label, prompt]) => `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(prompt)}</span></div>`).join("")}</div>
+        <h3>Phrase bank</h3><ul class="phrase-bank horizontal">${writing.phraseBank.map((phrase) => `<li>${escapeHtml(phrase)}</li>`).join("")}</ul>
+        <details class="model-answer"><summary>Ver texto-modelo</summary><pre class="model-writing">${escapeHtml(writing.model)}</pre></details>
+        <h3>Checklist antes de salvar</h3><ul class="checklist-list">${writing.checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      </div>
+    </details>
+
+    <details class="lesson-section">
+      <summary><span class="lesson-index">5</span><span><strong>Pronúncia e revisão</strong><small>Inteligibilidade + recuperação espaçada</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body">
+        <div class="pronunciation-card"><div><strong>${escapeHtml(lesson.pronunciation.target)}</strong><p>${escapeHtml(lesson.pronunciation.tip)}</p></div><button class="button compact secondary" type="button" data-speak="${escapeHtml(lesson.pronunciation.drill)}">Ouvir drill</button></div>
+        <p class="drill-line">${escapeHtml(lesson.pronunciation.drill)}</p>
+        <h3>Recuperação ativa</h3><ol class="question-list">${lesson.retrieval.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
+      </div>
+    </details>
+
+    <details class="lesson-section answer-section">
+      <summary><span class="lesson-index">✓</span><span><strong>Gabarito da leitura</strong><small>Abra somente depois de responder</small></span><span class="details-chevron">⌄</span></summary>
+      <div class="lesson-section-body"><ol class="answer-list"><li>${escapeHtml(reading.gistAnswer)}</li>${reading.details.map(([, answer]) => `<li>${escapeHtml(answer)}</li>`).join("")}</ol></div>
+    </details>
+  `;
+}
+
 function renderStudy() {
   const day = currentDay();
+  const lesson = currentLesson();
   const progress = dayProgress(day.id);
   renderDaySelect();
   $("#studyTitle").textContent = day.focus;
@@ -309,11 +389,18 @@ function renderStudy() {
   }).join("");
   $("#ritualProgress").textContent = `${completed.size} de ${day.activities.length}`;
 
-  const guide = app.program.grammarGuides[day.grammarGuide] || app.program.grammarGuides.base;
+  const fallback = app.program.grammarGuides[day.grammarGuide] || app.program.grammarGuides.base;
+  const guide = lesson?.grammar || { name: day.grammar, rule: fallback.rule, use: "Use a estrutura no contexto profissional do dia.", patterns: [], examples: fallback.examples, pitfall: fallback.pitfall, mistakes: [], practice: [[fallback.practice, "Resposta pessoal."]], frames: [] };
   $("#grammarPanel").innerHTML = `
-    <div class="panel-heading"><div><p class="eyebrow">Grammar in action</p><h2>${escapeHtml(day.grammar)}</h2></div><span class="badge">Forma · significado · uso</span></div>
-    <div class="grammar-layout"><div class="grammar-rule"><strong>Regra mínima</strong><p>${escapeHtml(guide.rule)}</p><div class="pitfall"><strong>Atenção PT → EN:</strong> ${escapeHtml(guide.pitfall)}</div></div><div><ul class="example-list">${guide.examples.map((example) => `<li>${escapeHtml(example)}</li>`).join("")}</ul><div class="micro-practice">Microprática: ${escapeHtml(guide.practice)}</div></div></div>
+    <div class="panel-heading"><div><p class="eyebrow">Grammar in action</p><h2>${escapeHtml(guide.name)}</h2><span class="grammar-focus-label">Foco do plano: ${escapeHtml(day.grammar)}</span></div><span class="badge">Forma · significado · uso</span></div>
+    <div class="grammar-deep-grid">
+      <div class="grammar-rule"><strong>Regra clara</strong><p>${escapeHtml(guide.rule)}</p><strong>Quando usar</strong><p>${escapeHtml(guide.use)}</p><div class="pitfall"><strong>Atenção PT → EN:</strong> ${escapeHtml(guide.pitfall)}</div></div>
+      <div class="pattern-stack">${guide.patterns.map(([label, pattern, example]) => `<div class="pattern-row"><span>${escapeHtml(label)}</span><code>${escapeHtml(pattern)}</code><small>${escapeHtml(example)}</small></div>`).join("")}</div>
+    </div>
+    <div class="grammar-support-grid"><div><h3>Exemplos naturais</h3><ul class="example-list">${guide.examples.map((example) => `<li>${escapeHtml(example)}</li>`).join("")}</ul></div><div><h3>Erros comuns</h3><div class="mistake-list">${guide.mistakes.map(([wrong, right, why]) => `<div><del>${escapeHtml(wrong)}</del><ins>${escapeHtml(right)}</ins><small>${escapeHtml(why)}</small></div>`).join("") || `<span>Observe a forma e compare com os exemplos.</span>`}</div></div></div>
   `;
+
+  renderLessonLibrary(day, lesson);
 
   const items = day.vocabularyIds.map((id) => app.program.vocabulary.find((item) => item.id === id)).filter(Boolean);
   $("#dailyVocab").innerHTML = items.map((item, index) => `
@@ -321,6 +408,14 @@ function renderStudy() {
   `).join("") || `<div class="empty-state">Este checkpoint usa a revisão dos itens já estudados.</div>`;
 
   $("#writingNote").value = progress.writing || "";
+  if (lesson) {
+    $("#writingBrief").innerHTML = `<strong>Tarefa do dia</strong><span>${escapeHtml(lesson.writing.task)}</span>`;
+    $("#writingTarget").textContent = `Meta: ${lesson.writing.range[0]}–${lesson.writing.range[1]}`;
+    $("#writingNote").placeholder = `Write ${lesson.writing.range[0]}–${lesson.writing.range[1]} words here...`;
+  } else {
+    $("#writingBrief").textContent = day.deliverable;
+    $("#writingTarget").textContent = "Meta: 80–120";
+  }
   $("#dayNotes").value = progress.notes || "";
   $("#errorNotes").value = progress.errors || "";
   $("#minutesDone").value = progress.minutes || "";

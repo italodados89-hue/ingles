@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102a43">
-    <meta name="description" content="Plataforma pessoal de estudo intensivo de inglês profissional em 16 semanas.">
-    <title>English Momentum — 16 semanas</title>
+    <meta name="description" content="Curso completo de inglês profissional em 16 semanas, com aulas, exercícios, modelos e revisão.">
+    <title>English Momentum — Study Edition</title>
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="stylesheet" href="./styles.css">
   </head>
@@ -116,6 +116,8 @@
 
                 <article class="panel grammar-panel" id="grammarPanel"></article>
 
+                <article class="panel lesson-library-panel" id="lessonLibraryPanel"></article>
+
                 <article class="panel">
                   <div class="panel-heading"><div><p class="eyebrow">10 chunks do dia</p><h2>Vocabulário em contexto</h2></div><span class="badge">Ouça · use · recupere</span></div>
                   <div class="daily-vocab" id="dailyVocab"></div>
@@ -126,8 +128,9 @@
                 <article class="panel note-panel">
                   <p class="eyebrow">Produção</p>
                   <h2>Meu texto em inglês</h2>
+                  <div class="writing-brief" id="writingBrief"></div>
                   <textarea id="writingNote" rows="9" placeholder="Write 80–120 words here..."></textarea>
-                  <div class="word-count"><span id="writingCount">0 palavras</span><span>Meta: 80–120</span></div>
+                  <div class="word-count"><span id="writingCount">0 palavras</span><span id="writingTarget">Meta: 80–120</span></div>
                 </article>
                 <article class="panel note-panel">
                   <p class="eyebrow">Reflection</p>
@@ -226,6 +229,7 @@
     <div class="toast-region" id="toastRegion" aria-live="polite"></div>
     <script src="./config.js"></script>
     <script src="./program-data.js"></script>
+    <script src="./lesson-library.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
